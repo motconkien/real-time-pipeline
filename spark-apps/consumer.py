@@ -1,14 +1,40 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
+import os 
+import json
 
 def main():
-    #creatre spark session, have to config because spark doesnt inclue kafka connector by default
+     #creatre spark session, have to config cuz spark doesnt inclue kafka connector by default
+     #if using s3 -> definitely need to config the hadoop conf when config spark session
     spark = SparkSession.builder \
         .appName("Forex Consumer") \
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0") \
+        .config(
+            "spark.jars.packages",
+            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,org.apache.hadoop:hadoop-aws:3.3.4"
+        ) \
         .getOrCreate()
+
+
     print("Spark session created...")
+
+    #define output and if it is s3, remember to set the env variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY 
+    # output_data = "./output/forex_data"  
+    output_data = 's3a://real-time-pipeline-v1/forex_data'
+    if output_data.startswith("s3a://"):
+        with open("config.json",'r') as file:
+            config = json.load(file)
+        hadoop_conf = spark._jsc.hadoopConfiguration()
+        hadoop_conf.set("fs.s3a.access.key", config.get('access_key'))
+        hadoop_conf.set("fs.s3a.secret.key", config.get('secret_key'))
+        hadoop_conf.set("fs.s3a.endpoint", "s3.ap-southeast-2.amazonaws.com")  # Thay vùng bucket bạn tạo
+
+        # hadoop_conf.set("fs.s3a.endpoint", os.getenv('s3.amazonaws.com'))
+    else:
+        output_data = "./output/forex_data"
+        if not os.path.exists(output_data):
+            os.makedirs(output_data)
+        
 
     spark.sparkContext.setLogLevel("WARN")
 
@@ -22,8 +48,9 @@ def main():
     print("Schema defined...")
 
     #read data from kafka topic amd format if it is not kafka, it might be csv, socket
-    # and because kafka runs in docker, use kafka:9092 as the bootstrap server
-    # and subscribe to the forex_topic -> read every new message sent there
+    # and if kafka runs in docker, use kafka:9092 as the bootstrap server else localhost:9092
+    # and subscribe to the forex_topic -> read every new message sent there and receicve the lastest one
+    # if not subscribed, it is option('startingOffsets', 'earliest') -> consume all available messagese 
 
     forex_df = spark.readStream \
         .format('kafka') \
@@ -38,7 +65,8 @@ def main():
     # parse the value column as JSON and apply the schema
     parse_df = forex_df.selectExpr("CAST(value AS STRING)") \
         .select(from_json(col("value"), schema).alias("data")) \
-        .select("data.*")  # Flatten the structure
+        .select("data.*") 
+        
     print("Data parsed from JSON...")
 
     #write the data to console
@@ -47,8 +75,22 @@ def main():
         .format("console") \
         .option("truncate", "false") \
         .start()
-    print("Writing data to console...")
+    print("Checking: Writing data to console...")
+
+    #write the data to s3 bucket or local 
+
+    aws_query = parse_df.writeStream \
+            .outputMode("append") \
+            .format("parquet") \
+            .option("path", output_data) \
+            .option("checkpointLocation", output_data + "_checkpoint") \
+            .start()
+    
+    print(f"Writing data to {output_data}...")
     query.awaitTermination()  # Keep the stream running until terminated
+    aws_query.awaitTermination(10)  # Keep the stream running until terminated
+    # query.stop()
+
 
 if __name__ == "__main__":
     main()
