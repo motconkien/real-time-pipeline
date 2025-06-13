@@ -12,8 +12,11 @@ x-airflow-common:
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
   volumes:
     - ./dags:/opt/airflow/dags
+    - ./requirements.txt:/requirements.txt
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
+    - ./producer:/opt/airflow/producer
+    - ./spark-apps:/opt/airflow/spark-apps
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
@@ -47,6 +50,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+    volumes:
+      - ./spark-apps:/opt/airflow/spark-apps
 
   airflow-scheduler:
     <<: *airflow-common
