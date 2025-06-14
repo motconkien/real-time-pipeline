@@ -83,9 +83,11 @@ The pipeline simulates ingesting real-time Forex or Tweet data, transforms it us
 ---
 
 ## 📋 Automation
+```
 make kafka-up           # Start Kafka and services
 make run-producer       # Run Kafka producer
 make run-consumer       # Run Spark consumer
 make run-dashboard      # Run Streamlit dashboard
 make stop-all           # Stop all services
 
+```
