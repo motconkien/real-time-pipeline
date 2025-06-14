@@ -29,7 +29,7 @@ The pipeline simulates ingesting real-time Forex or Tweet data, transforms it us
 
 ## 📁 Project Structure
 
-
+'''
 ├── dashboard/
 │   ├── forex_dashboard.py       # Streamlit dashboard for real-time Forex visualization
 │   └── Procfile                 # Procfile to deploy dashboard (e.g., on Heroku)
@@ -53,7 +53,7 @@ The pipeline simulates ingesting real-time Forex or Tweet data, transforms it us
 ├── README.md                   # This README file
 ├── requirements.txt            # Python dependencies
 
-
+'''
 ---
 
 ## 🚀 Getting Started
