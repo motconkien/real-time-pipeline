@@ -1,2 +1,2 @@
 v1
-{"path":"file:///Users/huyenhoang/Documents/Side_projects/real-time-pipeline/output/forex_data/part-00000-452bd8d6-1782-430e-9588-d5e5643c8cf6-c000.snappy.parquet","size":1627,"isDir":false,"modificationTime":1749627443440,"blockReplication":1,"blockSize":33554432,"action":"add"}
+{"path":"file:///Users/huyenhoang/Documents/Side_projects/real-time-pipeline/output/forex_data/part-00000-0ea153b6-2dff-4816-868b-3c4bd43b9d88-c000.snappy.parquet","size":1626,"isDir":false,"modificationTime":1749904386256,"blockReplication":1,"blockSize":33554432,"action":"add"}

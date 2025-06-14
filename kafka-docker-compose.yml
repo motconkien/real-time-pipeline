@@ -13,10 +13,10 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
-    depends_on:
-      - zookeeper
     ports:
       - "9092:9092"
+    depends_on:
+      - zookeeper
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_BROKER_ID: 1

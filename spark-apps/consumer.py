@@ -4,6 +4,29 @@ from pyspark.sql.types import *
 import os 
 import json
 
+USE_AWS = False
+if USE_AWS:
+    jdbc_url = "jdbc:postgresql://forex.cpg200e0ma98.ap-southeast-2.rds.amazonaws.com:5432/postgres"
+    password =  'airflow123'
+else:
+    jdbc_url = "jdbc:postgresql://127.0.0.1:5432/postgres"
+    password = 'root'
+def write_to_postgres(batch_df, batch_id):
+    try:
+        print(f"Writing batch {batch_id} to Postgres... rows: {batch_df.count()}")
+        batch_df.write \
+            .format('jdbc') \
+            .option('url', jdbc_url) \
+            .option('dbtable', 'forex_data') \
+            .option('user', 'postgres') \
+            .option('password', password) \
+            .option("driver", "org.postgresql.Driver") \
+            .mode('append') \
+            .save()
+        print(f"Batch {batch_id} written successfully.")
+    except Exception as e:
+        print(f"Error writing batch {batch_id}: {e}")
+        
 def main():
      #creatre spark session, have to config cuz spark doesnt inclue kafka connector by default
      #if using s3 -> definitely need to config the hadoop conf when config spark session
@@ -11,7 +34,7 @@ def main():
         .appName("Forex Consumer") \
         .config(
             "spark.jars.packages",
-            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,org.apache.hadoop:hadoop-aws:3.3.4"
+            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,org.apache.hadoop:hadoop-aws:3.3.4,org.postgresql:postgresql:42.5.4"
         ) \
         .getOrCreate()
 
@@ -19,8 +42,8 @@ def main():
     print("Spark session created...")
 
     #define output and if it is s3, remember to set the env variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY 
-    # output_data = "./output/forex_data"  
-    output_data = 's3a://real-time-pipeline-v1/forex_data'
+    output_data = "./output/forex_data"  
+    # output_data = 's3a://real-time-pipeline-v1/forex_data'
     if output_data.startswith("s3a://"):
         with open("config.json",'r') as file:
             config = json.load(file)
@@ -31,7 +54,6 @@ def main():
 
         # hadoop_conf.set("fs.s3a.endpoint", os.getenv('s3.amazonaws.com'))
     else:
-        output_data = "./output/forex_data"
         if not os.path.exists(output_data):
             os.makedirs(output_data)
         
@@ -78,7 +100,6 @@ def main():
     print("Checking: Writing data to console...")
 
     #write the data to s3 bucket or local 
-
     aws_query = parse_df.writeStream \
             .outputMode("append") \
             .format("parquet") \
@@ -87,9 +108,15 @@ def main():
             .start()
     
     print(f"Writing data to {output_data}...")
+
+    #write the data to postgres Mock DWH
+    postgres_query = parse_df.writeStream \
+                    .foreachBatch(write_to_postgres) \
+                    .outputMode("append") \
+                    .start()
     query.awaitTermination()  # Keep the stream running until terminated
     aws_query.awaitTermination(10)  # Keep the stream running until terminated
-    # query.stop()
+    postgres_query.awaitTermination()  # Keep the stream running until terminated
 
 
 if __name__ == "__main__":
