@@ -76,7 +76,7 @@ The pipeline simulates ingesting real-time Forex or Tweet data, transforms it us
 
 ## 📋 Usage
 
-- roducer streams Forex data into Kafka topic forex_topic.
+- Producer streams Forex data into Kafka topic forex_topic.
 - Spark consumer reads from Kafka, processes data, writes parquet files locally (output/forex_data/) and ingests into PostgreSQL.
 - Dashboard reads from PostgreSQL or parquet files to visualize Forex data in real-time.
 
