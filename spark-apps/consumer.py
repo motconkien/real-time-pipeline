@@ -50,7 +50,7 @@ def main():
         hadoop_conf = spark._jsc.hadoopConfiguration()
         hadoop_conf.set("fs.s3a.access.key", config.get('access_key'))
         hadoop_conf.set("fs.s3a.secret.key", config.get('secret_key'))
-        hadoop_conf.set("fs.s3a.endpoint", "s3.ap-southeast-2.amazonaws.com")  # Thay vùng bucket bạn tạo
+        hadoop_conf.set("fs.s3a.endpoint", "s3.ap-southeast-2.amazonaws.com")  
 
         # hadoop_conf.set("fs.s3a.endpoint", os.getenv('s3.amazonaws.com'))
     else:
