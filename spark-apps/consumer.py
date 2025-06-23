@@ -8,7 +8,7 @@ USE_AWS = False
 if USE_AWS:
     jdbc_url = "jdbc:postgresql://forex.cpg200e0ma98.ap-southeast-2.rds.amazonaws.com:5432/postgres"
     password =  'airflow123'
-    output_data = 's3a://real-time-pipeline-v1/forex_data
+    output_data = 's3a://real-time-pipeline-v1/forex_data'
 else:
     jdbc_url = "jdbc:postgresql://127.0.0.1:5432/postgres"
     password = 'root'
